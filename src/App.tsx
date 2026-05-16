@@ -12,13 +12,14 @@ function App() {
   const faceMesh = useFaceMesh();
   const signals = useSignals(faceMesh.landmarks);
   const scoreData = useEngagementScore(signals);
-  const notification = useNotifications(scoreData, signals);
+  const notificationData = useNotifications(scoreData, signals);
 
   // Request notification permission on mount
   useEffect(() => {
     if (!permissionsAsked && 'Notification' in window) {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission().catch(() => {
+      const NotifAPI = window.Notification as any;
+      if (NotifAPI.permission === 'default') {
+        NotifAPI.requestPermission().catch(() => {
           // Permission denied or blocked - app continues without OS notifications
         });
       }
@@ -76,15 +77,15 @@ function App() {
 
       {/* Floating UI components */}
       <WebcamView
-        videoRef={faceMesh.videoRef}
-        canvasRef={faceMesh.canvasRef}
+        videoRef={faceMesh.videoRef as React.RefObject<HTMLVideoElement>}
+        canvasRef={faceMesh.canvasRef as React.RefObject<HTMLCanvasElement>}
         isReady={faceMesh.isReady}
         error={faceMesh.error}
       />
 
       <EngagementHUD scoreData={scoreData} />
 
-      <Notification notification={notification} />
+      <Notification notification={notificationData} />
     </div>
   );
 }

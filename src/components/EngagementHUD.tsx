@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { HUD_COLORS, COLOR_THRESHOLD } from '../constants';
 import type { EngagementScoreData } from '../hooks/useEngagementScore';
 

@@ -17,7 +17,7 @@ export function useNotifications(
   const lowEngagementStartRef = useRef<number | null>(null);
   const notificationShownRef = useRef<boolean>(false);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const notificationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const notificationPermissionRef = useRef<NotificationPermission>('default');
 
   // Request notification permission on mount

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { FaceMesh } from '@mediapipe/face_mesh';
-import { Camera } from '@mediapipe/camera_utils';
+import * as Mediapipe from '@mediapipe/face_mesh';
+import * as CameraUtils from '@mediapipe/camera_utils';
 
 interface Point3D {
   x: number;
@@ -8,11 +8,14 @@ interface Point3D {
   z: number;
 }
 
+const FaceMesh = (Mediapipe as any).FaceMesh;
+const Camera = (CameraUtils as any).Camera;
+
 export function useFaceMesh() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const cameraRef = useRef<Camera | null>(null);
-  const faceMeshRef = useRef<FaceMesh | null>(null);
+  const cameraRef = useRef<any>(null);
+  const faceMeshRef = useRef<any>(null);
 
   const [landmarks, setLandmarks] = useState<Point3D[] | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -53,7 +56,7 @@ export function useFaceMesh() {
     cameraRef.current = camera;
 
     // Start camera with proper error handling
-    camera.start().catch((err) => {
+    camera.start().catch((err: any) => {
       const errorMsg = err.message || 'Failed to access camera';
       setError(errorMsg);
       console.error('Camera error:', err);

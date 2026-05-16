@@ -6,7 +6,7 @@ interface Point3D {
   z: number;
 }
 
-interface BlinkRateData {
+export interface BlinkRateData {
   earValues: number[];
   blinkCount: number;
   blinkRate: number; // blinks per minute

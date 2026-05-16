@@ -6,7 +6,7 @@ interface Point3D {
   z: number;
 }
 
-interface ExpressionBaseline {
+export interface ExpressionBaseline {
   mouthLeftY: number;
   mouthRightY: number;
   eyebrowLeftY: number;
