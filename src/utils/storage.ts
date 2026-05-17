@@ -1,4 +1,4 @@
-import { AnalyticsData, Session, EngagementSnapshot } from '../types/analytics';
+import type { AnalyticsData, Session, EngagementSnapshot } from '../types/analytics';
 
 const STORAGE_KEY = 'meetingmind_analytics';
 const MAX_SESSIONS = 30; // Keep last 30 sessions (~1-2MB)
@@ -114,8 +114,6 @@ export const storage = {
 
   // Get today's sessions
   getTodaysSessions(): Session[] {
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     return this.getSessionsFromLastDays(1);
   },
 

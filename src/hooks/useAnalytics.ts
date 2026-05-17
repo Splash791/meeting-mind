@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { storage } from '../utils/storage';
-import type { Session, EngagementSnapshot, AnalyticsData } from '../types/analytics';
+import type { Session, EngagementSnapshot } from '../types/analytics';
 import type { EngagementScoreData } from './useEngagementScore';
 import type { Signals } from './useSignals';
 
@@ -11,7 +11,7 @@ export function useAnalytics(
 ) {
   const [allSessions, setAllSessions] = useState<Session[]>([]);
   const currentSessionRef = useRef<Session | null>(null);
-  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Initialize on mount: load existing sessions and create new session if camera ready
   useEffect(() => {
