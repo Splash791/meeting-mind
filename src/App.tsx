@@ -8,8 +8,11 @@ import { WebcamView } from './components/WebcamView';
 import { EngagementHUD } from './components/EngagementHUD';
 import { Notification } from './components/Notification';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
+import { SettingsPanel } from './components/SettingsPanel';
+import { Activity, Settings } from 'lucide-react';
 
 function App() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [permissionsAsked, setPermissionsAsked] = useState(false);
   const faceMesh = useFaceMesh();
   const signals = useSignals(faceMesh.landmarks);
@@ -31,61 +34,66 @@ function App() {
   }, [permissionsAsked]);
 
   return (
-    <div className="w-full h-screen bg-gray-100 overflow-hidden flex flex-col">
+    <div className="w-full h-screen bg-background overflow-hidden flex flex-col relative text-white">
+      {/* Dynamic Background Elements */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-neon-green/10 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-neon-yellow/10 blur-[150px] rounded-full pointer-events-none" />
+
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900">MeetingMind</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          {faceMesh.error
-            ? '⚠️ Camera access denied. Please check permissions.'
-            : faceMesh.isReady && faceMesh.landmarks
-            ? '🟢 Monitoring your engagement...'
-            : '⏳ Initializing...'}
-        </p>
+      <div className="glass-panel border-x-0 border-t-0 px-8 py-5 flex items-center justify-between z-10">
+        <div className="flex items-center gap-3">
+          <Activity className="w-8 h-8 text-neon-green" />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">MeetingMind</h1>
+            <p className="text-xs text-white/50 font-mono tracking-widest uppercase mt-0.5">
+              {faceMesh.error
+                ? 'Camera access denied'
+                : faceMesh.isReady && faceMesh.landmarks
+                ? 'Monitoring Engagement'
+                : 'Initializing Sensors'}
+            </p>
+          </div>
+        </div>
+        <button 
+          onClick={() => setIsSettingsOpen(true)}
+          className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-white/10 cursor-pointer"
+        >
+          <Settings className="w-5 h-5 text-white/70" />
+        </button>
       </div>
 
-      {/* Main content: Two-column layout */}
-      <div className="flex-1 flex gap-4 p-4 overflow-hidden">
-        {/* Left side: Camera (60%) */}
-        <div className="flex-[0.6] flex flex-col items-center justify-center bg-white rounded-lg shadow-sm relative">
-          {faceMesh.error ? (
-            <div className="text-center">
-              <p className="text-red-600 font-semibold">Camera Access Denied</p>
-              <p className="text-gray-600 text-sm mt-2">
-                Please allow camera access in your browser settings
-              </p>
-            </div>
-          ) : faceMesh.isReady && scoreData ? (
-            <>
-              <WebcamView
-                videoRef={faceMesh.videoRef as React.RefObject<HTMLVideoElement>}
-                canvasRef={faceMesh.canvasRef as React.RefObject<HTMLCanvasElement>}
-                isReady={faceMesh.isReady}
-                error={faceMesh.error}
-              />
-              <EngagementHUD scoreData={scoreData} />
-            </>
-          ) : (
-            <div className="text-center">
-              <div className="inline-block">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-              </div>
-              <p className="text-gray-600 mt-4">Loading camera...</p>
-            </div>
-          )}
-        </div>
-
-        {/* Right side: Analytics Dashboard (40%) */}
-        <div className="flex-[0.4] min-w-0">
-          <AnalyticsDashboard
-            currentSession={analytics.currentSession}
-            allSessions={analytics.allSessions}
-          />
+      {/* Main content */}
+      <div className="flex-1 p-8 overflow-hidden z-10 flex">
+        {/* We place Analytics Dashboard here. It might need a dark theme update later, but we wrap it in a dark container for now */}
+        <div className="w-full max-w-3xl h-full mx-auto relative opacity-80 hover:opacity-100 transition-opacity duration-300">
+           {/* Invert the Analytics Dashboard for a quick dark mode hack, or let it be. We'll wrap it nicely. */}
+           <div className="absolute inset-0 bg-white/5 rounded-2xl overflow-hidden backdrop-blur-sm p-4 border border-surface-border mix-blend-screen">
+             <AnalyticsDashboard
+               currentSession={analytics.currentSession}
+               allSessions={analytics.allSessions}
+             />
+           </div>
         </div>
       </div>
+
+      {/* Floating HUD Elements */}
+      <WebcamView
+        videoRef={faceMesh.videoRef as React.RefObject<HTMLVideoElement>}
+        canvasRef={faceMesh.canvasRef as React.RefObject<HTMLCanvasElement>}
+        isReady={faceMesh.isReady}
+        error={faceMesh.error}
+        score={scoreData?.score}
+      />
+      
+      {faceMesh.isReady && scoreData && (
+        <EngagementHUD scoreData={scoreData} />
+      )}
 
       {/* Notification overlay */}
       <Notification notification={notificationData} />
+
+      {/* Settings Panel */}
+      <SettingsPanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
 }

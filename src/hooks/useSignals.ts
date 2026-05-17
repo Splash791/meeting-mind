@@ -7,6 +7,7 @@ import {
   expressionToEngagementScore,
   updateExpressionBaseline,
   type ExpressionBaseline,
+  type PrimaryExpression,
 } from '../utils/expressionScore';
 
 interface Point3D {
@@ -25,6 +26,7 @@ export interface Signals {
   blinkData: BlinkRateData;
   expressionData: {
     negativityScore: number;
+    primaryExpression: PrimaryExpression;
     baseline: ExpressionBaseline | null;
   };
 }
@@ -78,7 +80,7 @@ export function useSignals(landmarks: Point3D[] | null) {
       );
     }
 
-    const expressionScore = expressionToEngagementScore(expressionResult.negativityScore);
+    const expressionScore = expressionToEngagementScore(expressionResult.negativityScore, expressionResult.primaryExpression);
 
     setSignals({
       gazeScore,
@@ -90,6 +92,7 @@ export function useSignals(landmarks: Point3D[] | null) {
       blinkData,
       expressionData: {
         negativityScore: expressionResult.negativityScore,
+        primaryExpression: expressionResult.primaryExpression,
         baseline: expressionBaselineRef.current,
       },
     });

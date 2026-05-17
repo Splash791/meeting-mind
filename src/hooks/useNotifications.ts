@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { ENGAGEMENT_THRESHOLD, SUSTAINED_LOW_DURATION, NOTIFICATION_MESSAGES, AUDIO_CUE } from '../constants';
+import { SUSTAINED_LOW_DURATION, NOTIFICATION_MESSAGES, AUDIO_CUE } from '../constants';
 import type { EngagementScoreData } from './useEngagementScore';
 import type { Signals } from './useSignals';
+import { useSettings } from '../context/SettingsContext';
 
 export interface Notification {
   visible: boolean;
@@ -19,8 +20,9 @@ export function useNotifications(
   const audioContextRef = useRef<AudioContext | null>(null);
   const notificationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const notificationPermissionRef = useRef<NotificationPermission>('default');
+  
+  const { settings, audioUnlocked } = useSettings();
 
-  // Request notification permission on mount
   useEffect(() => {
     if ('Notification' in window) {
       if (Notification.permission === 'granted') {
@@ -34,9 +36,6 @@ export function useNotifications(
       }
     }
 
-    // Initialize audio context
-    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-
     return () => {
       if (notificationTimeoutRef.current) {
         clearTimeout(notificationTimeoutRef.current);
@@ -44,42 +43,61 @@ export function useNotifications(
     };
   }, []);
 
+  // Only init audio context once user unlocks it via settings test
+  useEffect(() => {
+    if (audioUnlocked && !audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+  }, [audioUnlocked]);
+
   useEffect(() => {
     if (!scoreData || !signals) {
       return;
     }
 
-    const isBelowThreshold = scoreData.score < ENGAGEMENT_THRESHOLD;
+    const isBelowThreshold = scoreData.score < settings.engagementThreshold;
 
     if (isBelowThreshold) {
-      // Start tracking low engagement
       if (!lowEngagementStartRef.current) {
         lowEngagementStartRef.current = Date.now();
       }
 
       const lowDuration = Date.now() - lowEngagementStartRef.current;
 
-      // Trigger notification after sustained low engagement
       if (lowDuration >= SUSTAINED_LOW_DURATION && !notificationShownRef.current) {
         const trigger = determineTrigger(signals);
         const message = NOTIFICATION_MESSAGES[trigger as keyof typeof NOTIFICATION_MESSAGES] || NOTIFICATION_MESSAGES.general;
 
-        // Show in-app notification
         setNotification({ visible: true, message, trigger });
         notificationShownRef.current = true;
 
-        // Play audio cue
-        playAudioCue();
-
-        // Show OS notification if permission granted
-        if (notificationPermissionRef.current === 'granted' && 'Notification' in window) {
-          new Notification('MeetingMind', {
-            body: message,
-            icon: '/favicon.svg',
-          });
+        if (settings.audioEnabled && audioUnlocked) {
+          playAudioCue();
         }
 
-        // Auto-dismiss in-app notification after 5 seconds
+        // Send macOS native notification (works in background)
+        if (notificationPermissionRef.current === 'granted' && 'Notification' in window) {
+          try {
+            const notification = new Notification('MeetingMind Alert', {
+              body: message,
+              icon: '/favicon.svg',
+              tag: 'engagement-alert', // Replace previous notification instead of stacking
+              requireInteraction: false, // Auto-dismiss (don't require user click)
+              // macOS specific - these might not work in all browsers but don't hurt
+              badge: '/favicon.svg',
+              silent: false, // Play system sound
+            });
+
+            // Keep notification visible longer on macOS (system controls actual duration)
+            notification.onclick = () => {
+              window.focus();
+              notification.close();
+            };
+          } catch (err) {
+            console.error('Failed to send notification:', err);
+          }
+        }
+
         if (notificationTimeoutRef.current) {
           clearTimeout(notificationTimeoutRef.current);
         }
@@ -88,18 +106,21 @@ export function useNotifications(
         }, 5000);
       }
     } else {
-      // Reset low engagement tracking
       lowEngagementStartRef.current = null;
       notificationShownRef.current = false;
     }
-  }, [scoreData, signals]);
+  }, [scoreData, signals, settings, audioUnlocked]);
 
   const playAudioCue = () => {
     if (!audioContextRef.current) return;
 
     const ctx = audioContextRef.current;
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    
     const now = ctx.currentTime;
-    const duration = AUDIO_CUE.duration / 1000; // convert to seconds
+    const duration = AUDIO_CUE.duration / 1000;
     const freq = AUDIO_CUE.frequency;
 
     try {
@@ -126,7 +147,6 @@ export function useNotifications(
 }
 
 function determineTrigger(signals: Signals): 'gaze' | 'blink' | 'expression' | 'headPose' | 'general' {
-  // Find the signal with the lowest score
   const scores = [
     { score: signals.gazeScore, trigger: 'gaze' as const },
     { score: signals.blinkScore, trigger: 'blink' as const },
@@ -137,7 +157,6 @@ function determineTrigger(signals: Signals): 'gaze' | 'blink' | 'expression' | '
   scores.sort((a, b) => a.score - b.score);
   const lowestSignal = scores[0];
 
-  // Only attribute to a specific signal if it's significantly lower
   if (lowestSignal.score < 50) {
     return lowestSignal.trigger;
   }

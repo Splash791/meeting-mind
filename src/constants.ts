@@ -1,14 +1,14 @@
-// Engagement thresholds
-export const ENGAGEMENT_THRESHOLD = 50;
-export const SUSTAINED_LOW_DURATION = 30000; // 30 seconds in milliseconds
+// Engagement thresholds (fine-tuned)
+export const ENGAGEMENT_THRESHOLD = 45; // Notify at 45% instead of 50%
+export const SUSTAINED_LOW_DURATION = 40000; // 40 seconds instead of 30 (less aggressive)
 export const ROLLING_WINDOW_SIZE = 5000; // 5 seconds
 
-// Detection signal thresholds
-export const GAZE_AWAY_THRESHOLD = 0.6; // 60% off-center
-export const HEAD_TILT_THRESHOLD = 15; // degrees
-export const HEAD_TILT_PENALTY_THRESHOLD = 10000; // 10 seconds before head tilt counts
-export const BLINK_RATE_LOW_THRESHOLD = 12; // blinks per minute (low engagement indicator)
-export const BLINK_EAR_CLOSED = 0.15; // Eye Aspect Ratio threshold for closed eye
+// Detection signal thresholds (more forgiving)
+export const GAZE_AWAY_THRESHOLD = 0.65; // 65% off-center (slightly more forgiving)
+export const HEAD_TILT_THRESHOLD = 20; // 20 degrees instead of 15 (more natural movement allowed)
+export const HEAD_TILT_PENALTY_THRESHOLD = 12000; // 12 seconds instead of 10
+export const BLINK_RATE_LOW_THRESHOLD = 10; // 10 BPM instead of 12 (more forgiving)
+export const BLINK_EAR_CLOSED = 0.18; // Slightly higher threshold for detecting blinks
 
 // Signal weights in composite score
 export const SIGNAL_WEIGHTS = {
@@ -32,13 +32,13 @@ export const COLOR_THRESHOLD = {
   low: 0,
 };
 
-// Notification messages by trigger type
+// Notification messages by trigger type (warm & encouraging)
 export const NOTIFICATION_MESSAGES = {
-  gaze: "Looks like something caught your eye — refocus when you can!",
-  blink: "Blink rate's dropping — you doing okay?",
-  expression: "A quick smile can go a long way in this meeting!",
-  headPose: "Looks like you might be drifting — bring it back!",
-  general: "Looks like you might be losing focus — bring it back!",
+  gaze: "Eyes wandering? Bring your focus back to the screen! 👀",
+  blink: "Your eyes need a break—try blinking more naturally 😊",
+  expression: "Stay engaged! A little positivity goes a long way ✨",
+  headPose: "Sit up straight and keep your energy up! 💪",
+  general: "Let's bring back your focus—you've got this! 🎯",
 };
 
 // Audio cue parameters

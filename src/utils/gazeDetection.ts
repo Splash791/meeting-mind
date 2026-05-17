@@ -96,11 +96,15 @@ export function gazeToEngagementScore(gazeData: {
   confidence: number;
 }): number {
   // If looking at screen, high engagement
+  // Even slight detection loss is OK (95% confidence still = 95)
   if (gazeData.isLooking) {
-    return 100 * gazeData.confidence;
+    return Math.round(100 * gazeData.confidence);
   }
 
-  // If looking away, low engagement
-  // Penalize more if confidence is high (clearly looking away)
-  return Math.max(0, 30 - gazeData.confidence * 30);
+  // If looking away - more forgiving now
+  // Slight glances: still reasonable score
+  // Sustained looking away: low score
+  const baselineScore = 50; // Not terrible if just glancing
+  const confidencePenalty = gazeData.confidence * 35; // Worse if clearly looking away
+  return Math.max(0, baselineScore - confidencePenalty);
 }

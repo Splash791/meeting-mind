@@ -120,25 +120,33 @@ export function trackBlinkRate(landmarks: Point3D[], history: BlinkRateData[]): 
 
 export function blinkRateToEngagementScore(blinkData: BlinkRateData): number {
   if (blinkData.blinkRate === 0) {
-    return 50; // Unknown state
+    return 75; // Unknown state - neutral, not penalizing
   }
 
-  // Normal blink rate is 15-20 blinks per minute
-  // Below 12 BPM = low engagement
-  // Above 30 BPM = stress/anxiety (but less critical than low blink)
+  // Healthy blink rate: 12-25 blinks per minute
+  // Low blink (staring/sleepy): <8 BPM
+  // High blink (stress): >40 BPM
 
-  if (blinkData.blinkRate < 5) {
-    return 20; // Very low, clearly disengaged/staring
+  if (blinkData.blinkRate < 8) {
+    // Very low - staring or eyes closed
+    return 20;
   }
 
-  if (blinkData.blinkRate < BLINK_RATE_LOW_THRESHOLD) {
-    return 40; // Low blink rate = low engagement
+  if (blinkData.blinkRate < 12) {
+    // Below healthy range - slightly low
+    return 50;
   }
 
-  if (blinkData.blinkRate > 40) {
-    return 70; // High blink rate = some stress but still engaged
+  if (blinkData.blinkRate <= 30) {
+    // Healthy range - full engagement
+    return 100;
   }
 
-  // Normal range (12-40 BPM)
-  return 100;
+  if (blinkData.blinkRate <= 45) {
+    // Slightly elevated - minor stress but still engaged
+    return 85;
+  }
+
+  // Very high blink rate - indicates significant stress
+  return 70;
 }
