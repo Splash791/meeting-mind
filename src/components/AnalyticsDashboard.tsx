@@ -15,6 +15,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { analyticsEngine } from '../utils/analyticsEngine';
+import { ZoomMeetings } from './ZoomMeetings';
 import type { Session } from '../types/analytics';
 
 const TRIGGER_COLORS = {
@@ -24,7 +25,7 @@ const TRIGGER_COLORS = {
   headPose: '#8b5cf6',
 };
 
-const TAB_NAMES = ['Today', 'Weekly', 'Triggers', 'Insights', 'Goals'] as const;
+const TAB_NAMES = ['Today', 'Weekly', 'Triggers', 'Insights', 'Goals', 'Meetings'] as const;
 
 interface AnalyticsDashboardProps {
   currentSession: Session | null;
@@ -127,6 +128,10 @@ export function AnalyticsDashboard({
     const seconds = Math.floor((ms % 60000) / 1000);
     return `${minutes}m ${seconds}s`;
   };
+
+  const renderMeetingsTab = () => (
+    <ZoomMeetings />
+  );
 
   // Render tabs
   const renderTodayTab = () => (
@@ -461,6 +466,7 @@ export function AnalyticsDashboard({
         {activeTab === 'Triggers' && renderTriggersTab()}
         {activeTab === 'Insights' && renderInsightsTab()}
         {activeTab === 'Goals' && renderGoalsTab()}
+        {activeTab === 'Meetings' && renderMeetingsTab()}
       </div>
     </div>
   );

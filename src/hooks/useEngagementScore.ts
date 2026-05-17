@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { SIGNAL_WEIGHTS, ROLLING_WINDOW_SIZE } from '../constants';
+import { ROLLING_WINDOW_SIZE } from '../constants';
 import type { Signals } from './useSignals';
 import { useSettings } from '../context/SettingsContext';
 
