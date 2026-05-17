@@ -1,15 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import * as Mediapipe from '@mediapipe/face_mesh';
-import * as CameraUtils from '@mediapipe/camera_utils';
 
 interface Point3D {
   x: number;
   y: number;
   z: number;
 }
-
-const FaceMesh = (Mediapipe as any).FaceMesh;
-const Camera = (CameraUtils as any).Camera;
 
 export function useFaceMesh() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -24,79 +19,107 @@ export function useFaceMesh() {
   useEffect(() => {
     if (!videoRef.current || !canvasRef.current) return;
 
-    const faceMesh = new FaceMesh({
-      locateFile: (file: string) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
-      },
-    });
+    let isMounted = true;
 
-    faceMeshRef.current = faceMesh;
+    const initMediaPipe = async () => {
+      try {
+        // Dynamically import MediaPipe modules
+        const faceMeshModule = await import('@mediapipe/face_mesh');
+        const cameraModule = await import('@mediapipe/camera_utils');
 
-    faceMesh.setOptions({
-      maxNumFaces: 1,
-      refineLandmarks: true,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
+        if (!isMounted) return;
 
-    faceMesh.onResults(onResults);
+        const FaceMesh = faceMeshModule.FaceMesh;
+        const Camera = cameraModule.Camera;
 
-    const camera = new Camera(videoRef.current, {
-      onFrame: async () => {
+        const faceMesh = new FaceMesh({
+          locateFile: (file: string) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+          },
+        });
+
+        faceMeshRef.current = faceMesh;
+
+        faceMesh.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: true,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
+
+        faceMesh.onResults((results: any) => {
+          if (!isMounted) return;
+
+          const canvasElement = canvasRef.current;
+          if (!canvasElement) return;
+
+          // Convert normalized coordinates to canvas coordinates
+          if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+            const faceLandmarks = results.multiFaceLandmarks[0];
+            setLandmarks(faceLandmarks);
+          } else {
+            setLandmarks(null);
+          }
+
+          // Draw on canvas for debugging
+          const canvasCtx = canvasElement.getContext('2d');
+          if (!canvasCtx) return;
+
+          canvasCtx.save();
+          canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+          // Draw landmarks if available
+          if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+            drawFaceLandmarks(canvasCtx, results.multiFaceLandmarks[0], canvasElement.width, canvasElement.height);
+          }
+
+          canvasCtx.restore();
+        });
+
+        const camera = new Camera(videoRef.current, {
+          onFrame: async () => {
+            try {
+              await faceMesh.send({ image: videoRef.current! });
+            } catch (err) {
+              console.error('FaceMesh error:', err);
+            }
+          },
+          width: 640,
+          height: 480,
+        });
+
+        cameraRef.current = camera;
+
+        // Start camera with proper error handling
         try {
-          await faceMesh.send({ image: videoRef.current! });
-        } catch (err) {
-          console.error('FaceMesh error:', err);
+          await camera.start();
+          if (isMounted) {
+            setIsReady(true);
+          }
+        } catch (err: any) {
+          if (isMounted) {
+            const errorMsg = err.message || 'Failed to access camera';
+            setError(errorMsg);
+            console.error('Camera error:', err);
+          }
         }
-      },
-      width: 640,
-      height: 480,
-    });
+      } catch (err) {
+        if (isMounted) {
+          console.error('MediaPipe initialization error:', err);
+          setError('Failed to initialize MediaPipe');
+        }
+      }
+    };
 
-    cameraRef.current = camera;
-
-    // Start camera with proper error handling
-    camera.start().catch((err: any) => {
-      const errorMsg = err.message || 'Failed to access camera';
-      setError(errorMsg);
-      console.error('Camera error:', err);
-    });
-
-    setIsReady(true);
+    initMediaPipe();
 
     return () => {
+      isMounted = false;
       if (cameraRef.current) {
         cameraRef.current.stop();
       }
     };
   }, []);
-
-  const onResults = (results: any) => {
-    const canvasElement = canvasRef.current;
-    if (!canvasElement) return;
-
-    // Convert normalized coordinates to canvas coordinates
-    if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-      const faceLandmarks = results.multiFaceLandmarks[0];
-      setLandmarks(faceLandmarks);
-    } else {
-      setLandmarks(null);
-    }
-
-    // Draw on canvas for debugging
-    const canvasCtx = canvasElement.getContext('2d');
-    if (!canvasCtx) return;
-
-    canvasCtx.save();
-    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-
-    // Draw landmarks if available
-    if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-      drawFaceLandmarks(canvasCtx, results.multiFaceLandmarks[0], canvasElement.width, canvasElement.height);
-    }
-
-    canvasCtx.restore();
-  };
 
   const drawFaceLandmarks = (
     ctx: CanvasRenderingContext2D,
