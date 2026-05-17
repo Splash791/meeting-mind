@@ -23,15 +23,23 @@ export function useFaceMesh() {
 
     const initMediaPipe = async () => {
       try {
+        console.log('[MeetingMind] Starting MediaPipe initialization...');
+
         // Dynamically import MediaPipe modules
+        console.log('[MeetingMind] Importing face_mesh module...');
         const faceMeshModule = await import('@mediapipe/face_mesh');
+        console.log('[MeetingMind] face_mesh loaded');
+
+        console.log('[MeetingMind] Importing camera_utils module...');
         const cameraModule = await import('@mediapipe/camera_utils');
+        console.log('[MeetingMind] camera_utils loaded');
 
         if (!isMounted) return;
 
         const FaceMesh = faceMeshModule.FaceMesh;
         const Camera = cameraModule.Camera;
 
+        console.log('[MeetingMind] Creating FaceMesh instance...');
         const faceMesh = new FaceMesh({
           locateFile: (file: string) => {
             return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
@@ -76,6 +84,7 @@ export function useFaceMesh() {
           canvasCtx.restore();
         });
 
+        console.log('[MeetingMind] Creating Camera instance...');
         const camera = new Camera(videoRef.current, {
           onFrame: async () => {
             try {
@@ -91,8 +100,10 @@ export function useFaceMesh() {
         cameraRef.current = camera;
 
         // Start camera with proper error handling
+        console.log('[MeetingMind] Starting camera...');
         try {
           await camera.start();
+          console.log('[MeetingMind] Camera started successfully');
           if (isMounted) {
             setIsReady(true);
           }
