@@ -24,28 +24,27 @@ export function WebcamView({ videoRef, canvasRef, isReady, error }: WebcamViewPr
               <p className="text-red-300 text-xs mt-2">Check camera permissions</p>
             </div>
           </div>
-        ) : (
-          <>
-            {/* Video stream */}
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover mirror"
-              style={{ transform: 'scaleX(-1)' }}
-            />
+        ) : null}
 
-            {/* Canvas overlay for landmarks */}
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0 w-full h-full"
-              width={640}
-              height={480}
-            />
+        {/* Always render video and canvas for refs (hidden by CSS when not ready) */}
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          className={`absolute inset-0 w-full h-full object-cover mirror ${!isReady || error ? 'hidden' : ''}`}
+          style={{ transform: 'scaleX(-1)' }}
+        />
 
-            {/* Status indicator */}
-            <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-green-500 animate-pulse" />
-          </>
+        <canvas
+          ref={canvasRef}
+          className={`absolute inset-0 w-full h-full ${!isReady || error ? 'hidden' : ''}`}
+          width={640}
+          height={480}
+        />
+
+        {/* Status indicator */}
+        {isReady && !error && (
+          <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-green-500 animate-pulse" />
         )}
       </div>
 
