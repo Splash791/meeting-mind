@@ -71,11 +71,6 @@ By bringing scheduling, planning, execution, and follow-up into one place, Meeti
 
 ---
 
-## Example Screenshots
-
-_Add a screenshot or diagram illustrating Meeting Mind’s dashboard or workflow here!_
-
----
 
 ## Contributing
 
